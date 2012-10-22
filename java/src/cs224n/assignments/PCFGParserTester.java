@@ -78,7 +78,7 @@ public class PCFGParserTester {
 					score.get(i).add(j, new Counter<String>());
 				}
 			}
-			
+
 			System.out.println("Done initalizing arrays: " + ((System.currentTimeMillis()-start)/1000F));
 			start = System.currentTimeMillis();
 			// Initialize score.
@@ -112,27 +112,27 @@ public class PCFGParserTester {
 
 			System.out.println("Done inputting lex: " + ((System.currentTimeMillis()-start)/1000F));
 			start = System.currentTimeMillis();
-			
+
 			for (int span = 2; span <= sentence.size(); span++) {
 				for (int begin = 0; begin <= sentence.size() - span; begin++) {
 					int end = begin + span;
 					Counter<String> squareScore = score.get(begin).get(end);
 					for (int split = begin + 1; split <= end - 1; split++) {
-            Counter<String> leftScore = score.get(begin).get(split);
-            Counter<String> rightScore = score.get(split).get(end);
+						Counter<String> leftScore = score.get(begin).get(split);
+						Counter<String> rightScore = score.get(split).get(end);
 
 						for (String B: leftScore.keySet()) {
-              double scoreB = leftScore.getCount(B);
+							double scoreB = leftScore.getCount(B);
 
-              for (BinaryRule rule: grammar.getBinaryRulesByLeftChild(B)) {
-                String C = rule.getRightChild();
-							  String A = rule.getParent();
+							for (BinaryRule rule: grammar.getBinaryRulesByLeftChild(B)) {
+								String C = rule.getRightChild();
+								String A = rule.getParent();
 
-                if (rightScore.keySet().contains(C)) {
-                  double scoreC = rightScore.getCount(C);
+								if (rightScore.keySet().contains(C)) {
+									double scoreC = rightScore.getCount(C);
 
 									double probability = scoreB + scoreC + 
-											        (-Math.log(rule.getScore()));
+											(-Math.log(rule.getScore()));
 									double oldScore = squareScore.getCount(A);
 									if (probability < oldScore  || oldScore == 0.0) {
 										squareScore.setCount(A, probability);
@@ -376,7 +376,7 @@ public class PCFGParserTester {
 			recMarkovUnannotateTree(annotatedTree);
 			return annotatedTree;
 		}
-		
+
 		public static void recMarkovUnannotateTree(Tree<String> tree){
 			String label = tree.getLabel();
 			int cutIndex = label.indexOf('^');
@@ -385,12 +385,12 @@ public class PCFGParserTester {
 				recMarkovUnannotateTree(child);
 			}
 		}
-		
+
 		public static Tree<String> markovAnnotateTree(Tree<String> unAnnotatedTree) {
 			return markovizeTree(unAnnotatedTree);
 		}
 
-		
+
 		public static Tree<String> annotateTree(Tree<String> unAnnotatedTree) {
 
 			// Currently, the only annotation done is a lossless binarization
@@ -413,11 +413,11 @@ public class PCFGParserTester {
 			}
 			return tree;
 		}
-		
+
 		private static Tree<String> markovizeTree(Tree<String> tree) {
 			return markovizeTreeHelper(null, tree);
 		}
-	
+
 		private static Tree<String> binarizeTree(Tree<String> tree) {
 			String label = tree.getLabel();
 			if (tree.isLeaf())
@@ -584,7 +584,7 @@ public class PCFGParserTester {
 				}
 			}
 		}
-		
+
 		public List<BinaryRule> getBinaryRulesByChildren(String leftChild, String rightChild) {
 			return CollectionUtils.getValueList(binaryRulesByChildren, new Pair<String, String>(leftChild, rightChild));
 		}
@@ -912,8 +912,8 @@ public class PCFGParserTester {
 			throw new RuntimeException("Bad data set mode: "+ dataSet+", use miniTest, or treebank."); 
 		}
 		parser.train(trainTrees);
-    testParser(parser, testTrees);
-    /*
+		testParser(parser, testTrees);
+		/*
 		List<Tree<String>> test1 = new ArrayList<Tree<String>>();
 		test1.add((trainTrees).get(1));
 		System.out.println("test 1 is " + test1.toString());
