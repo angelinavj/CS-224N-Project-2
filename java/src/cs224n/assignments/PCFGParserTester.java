@@ -6,7 +6,7 @@ import cs224n.ling.Trees;
 import cs224n.parser.EnglishPennTreebankParseEvaluator;
 import cs224n.util.*;
 
-import java.io.BufferedReader;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -43,192 +43,194 @@ public class PCFGParserTester {
 
 		public void train(List<Tree<String>> trainTrees) {
 
-      List<Tree<String> > annotatedTrees = new ArrayList<Tree<String>> ();
-      for (Tree<String> tree: trainTrees) {
-        Tree<String> newTree = TreeAnnotations.annotateTree(tree);
-        annotatedTrees.add(newTree);
-      }
+			List<Tree<String> > annotatedTrees = new ArrayList<Tree<String>> ();
+			for (Tree<String> tree: trainTrees) {
+				Tree<String> newTree = TreeAnnotations.annotateTree(tree);
+				annotatedTrees.add(newTree);
+			}
 			lexicon = new Lexicon(annotatedTrees);
 			grammar = new Grammar(annotatedTrees);
+			System.exit(1);
 		}
 
-    private void printDebug(List<String> sentence, ArrayList<ArrayList<Counter<String> > >score, Set<String> nonTerminals) {
-      for (int i = 0; i < sentence.size(); i++) {
-        for (int j = 0; j <= sentence.size(); j++) {
-          for (String nonTerminal: nonTerminals) {
-            if (score.get(i).get(j).getCount(nonTerminal) != 0) {
-              System.out.println(i + " (" + sentence.get(i) + ") " + j + " " + nonTerminal + " " + score.get(i).get(j).getCount(nonTerminal));
-        
-            }
-          }
-        }
-      }
-    }
+		private void printDebug(List<String> sentence, ArrayList<ArrayList<Counter<String> > >score, Set<String> nonTerminals) {
+			for (int i = 0; i < sentence.size(); i++) {
+				for (int j = 0; j <= sentence.size(); j++) {
+					for (String nonTerminal: nonTerminals) {
+						if (score.get(i).get(j).getCount(nonTerminal) != 0) {
+							System.out.println(i + " (" + sentence.get(i) + ") " + j + " " + nonTerminal + " " + score.get(i).get(j).getCount(nonTerminal));
+
+						}
+					}
+				}
+			}
+		}
 
 		public Tree<String> getBestParse(List<String> sentence) {
-      Set<String> nonTerminals = grammar.getAllNonTerminals();
-      nonTerminals.addAll(lexicon.getAllTags());
+			System.out.println(sentence);
+			Set<String> nonTerminals = grammar.getAllNonTerminals();
+			nonTerminals.addAll(lexicon.getAllTags());
 
-      ArrayList<ArrayList<Counter<String> > > score = new ArrayList<ArrayList<Counter<String> > >();
+			ArrayList<ArrayList<Counter<String> > > score = new ArrayList<ArrayList<Counter<String> > >();
 
-      // TODO(veni): Left-align the 2D list to save space.
-      for (int i = 0; i < sentence.size(); i++) {
-        score.add(i, new ArrayList<Counter<String> >());
-        for (int j = 0; j <= sentence.size(); j++) {
-          score.get(i).add(j, new Counter<String>());
-        }
-      }
+			// TODO(veni): Left-align the 2D list to save space.
+			for (int i = 0; i < sentence.size(); i++) {
+				score.add(i, new ArrayList<Counter<String> >());
+				for (int j = 0; j <= sentence.size(); j++) {
+					score.get(i).add(j, new Counter<String>());
+				}
+			}
 
-      // Initialize score.
-      for (int i = 0; i < sentence.size(); i++) {
-        String curWord = sentence.get(i);
-        for (String tag : lexicon.getAllTags()) {
-          Counter<String> counter = score.get(i).get(i+1); 
-          counter.setCount(tag, -1 * Math.log(lexicon.scoreTagging(curWord, tag)));
-        }
+			// Initialize score.
+			for (int i = 0; i < sentence.size(); i++) {
+				String curWord = sentence.get(i);
+				for (String tag : lexicon.getAllTags()) {
+					Counter<String> counter = score.get(i).get(i+1); 
+					counter.setCount(tag, -1 * Math.log(lexicon.scoreTagging(curWord, tag)));
+				}
 
-        // Handle unaries
-        
-        boolean added = true;
-        while (added) {
-          added = false;
+				// Handle unaries
 
-          Set<String> temp = new HashSet<String>(score.get(i).get(i+1).keySet());
-          for (String B: temp) {
-            for (UnaryRule rule: grammar.getUnaryRulesByChild(B)) {
-              String A = rule.getParent();
+				boolean added = true;
+				while (added) {
+					added = false;
 
-              double probability = score.get(i).get(i+1).getCount(B) + -1 * Math.log(rule.getScore());
-              if (probability > score.get(i).get(i+1).getCount(A)) {
-                score.get(i).get(i+1).setCount(A, probability);
-                added = true;
-              }
-            }
-          }
-          
-        }
-      }
+					Set<String> temp = new HashSet<String>(score.get(i).get(i+1).keySet());
+					for (String B: temp) {
+						for (UnaryRule rule: grammar.getUnaryRulesByChild(B)) {
+							String A = rule.getParent();
 
-      for (int span = 2; span <= sentence.size(); span++) {
-        for (int begin = 0; begin <= sentence.size() - span; begin++) {
-          int end = begin + span;
-          for (int split = begin + 1; split <= end - 1; split++) {
+							double probability = score.get(i).get(i+1).getCount(B) + -1 * Math.log(rule.getScore());
+							if (probability > score.get(i).get(i+1).getCount(A)) {
+								score.get(i).get(i+1).setCount(A, probability);
+								added = true;
+							}
+						}
+					}
 
-            for (String B: score.get(begin).get(split).keySet()) {
-              List<BinaryRule> rules = grammar.getBinaryRulesByLeftChild(B);
-              for (String C: score.get(split).get(end).keySet()) {
-                for (BinaryRule rule: rules) {
-                  if (rule.getRightChild().equals(C)) {
-                    String A = rule.getParent();
+				}
+			}
 
-                    double probability = score.get(begin).get(split).getCount(B) +
-                                          score.get(split).get(end).getCount(C) +
-                                          (-1 * Math.log(rule.getScore()));
+			for (int span = 2; span <= sentence.size(); span++) {
+				for (int begin = 0; begin <= sentence.size() - span; begin++) {
+					int end = begin + span;
+					for (int split = begin + 1; split <= end - 1; split++) {
 
-                    if (probability > score.get(begin).get(end).getCount(A)) {
-                      score.get(begin).get(end).setCount(A, probability);
-                    }
-                  }
-                }
-              }
-            } 
-          }  
-          // Handle unaries
-        
-          boolean added = true;
-          while (added) {
-            added = false;
+						for (String B: score.get(begin).get(split).keySet()) {
+							List<BinaryRule> rules = grammar.getBinaryRulesByLeftChild(B);
+							for (String C: score.get(split).get(end).keySet()) {
+								for (BinaryRule rule: rules) {
+									if (rule.getRightChild().equals(C)) {
+										String A = rule.getParent();
 
-            Set<String> temp = new HashSet<String>(score.get(begin).get(end).keySet());
-            for (String B: temp) {
-              for (UnaryRule rule: grammar.getUnaryRulesByChild(B)) {
-                String A = rule.getParent();
+										double probability = score.get(begin).get(split).getCount(B) +
+												score.get(split).get(end).getCount(C) +
+												(-1 * Math.log(rule.getScore()));
 
-                double probability = score.get(begin).get(end).getCount(B) - Math.log(rule.getScore());
-                if (probability > score.get(begin).get(end).getCount(A)) {
-                  score.get(begin).get(end).setCount(A, probability);
-                  added = true;
-                }
-              }  
-            } 
-          }
-          
-        }
+										if (probability > score.get(begin).get(end).getCount(A)) {
+											score.get(begin).get(end).setCount(A, probability);
+										}
+									}
+								}
+							}
+						} 
+					}  
+					// Handle unaries
 
-      }
+					boolean added = true;
+					while (added) {
+						added = false;
 
+						Set<String> temp = new HashSet<String>(score.get(begin).get(end).keySet());
+						for (String B: temp) {
+							for (UnaryRule rule: grammar.getUnaryRulesByChild(B)) {
+								String A = rule.getParent();
 
+								double probability = score.get(begin).get(end).getCount(B) - Math.log(rule.getScore());
+								if (probability > score.get(begin).get(end).getCount(A)) {
+									score.get(begin).get(end).setCount(A, probability);
+									added = true;
+								}
+							}  
+						} 
+					}
+
+				}
+
+			}
 			return buildTree(sentence, score);
 		}
 
 
-    private Tree<String> buildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score) {
-      return TreeAnnotations.unAnnotateTree(recursiveBuildTree(sentence, score, 0, sentence.size(), "ROOT"));
-    }
+		private Tree<String> buildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score) {
+			Tree<String> annotated = recursiveBuildTree(sentence, score, 0, sentence.size(), "ROOT");
+			System.out.println(annotated);
+			return TreeAnnotations.unAnnotateTree(annotated);
+		}
 
-    private Tree<String> recursiveBuildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score,
-                                          int begin, int end, String tag) {
-      System.out.println(begin + " " + end + " " + tag);
-      Tree<String> curTree = new Tree<String>(tag);
+		private Tree<String> recursiveBuildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score,
+				int begin, int end, String tag) {
+			System.out.println(begin + " " + end + " " + tag);
+			Tree<String> curTree = new Tree<String>(tag);
 
-      double tagScore = score.get(begin).get(end).getCount(tag);
+			double tagScore = score.get(begin).get(end).getCount(tag);
 
-      for (int split = begin + 1; split <= end - 1; split++) {
-        for (String B : score.get(begin).get(split).keySet()) {
-          List<BinaryRule> rules = grammar.getBinaryRulesByLeftChild(B);
+			for (int split = begin + 1; split <= end - 1; split++) {
+				for (String B : score.get(begin).get(split).keySet()) {
+					List<BinaryRule> rules = grammar.getBinaryRulesByLeftChild(B);
 
-          for (String C: score.get(split).get(end).keySet()) {
-            double ruleScore = 0.0;
-            for (BinaryRule rule: rules) {
-              if (rule.getRightChild().equals(C) && rule.getParent().equals(tag)) {
-                ruleScore = rule.getScore();
-                break;
-              }
-            }
-            if (ruleScore == 0.0) continue;
+					for (String C: score.get(split).get(end).keySet()) {
+						double ruleScore = 0.0;
+						for (BinaryRule rule: rules) {
+							if (rule.getRightChild().equals(C) && rule.getParent().equals(tag)) {
+								ruleScore = rule.getScore();
+								break;
+							}
+						}
+						if (ruleScore == 0.0) continue;
 
-            double probability = score.get(begin).get(split).getCount(B) +
-                                              score.get(split).get(end).getCount(C) -
-                                              Math.log(ruleScore);
-            if (probability == tagScore) {
-              
-              List<Tree<String> > children = new ArrayList<Tree<String> >();
-              children.add(recursiveBuildTree(sentence, score, begin, split, B));
-              children.add(recursiveBuildTree(sentence, score, split, end, C));
-              curTree.setChildren(children);
-          
-              return curTree;
-            }
-  
-          }
-        }
-      }
+						double probability = score.get(begin).get(split).getCount(B) +
+								score.get(split).get(end).getCount(C) -
+								Math.log(ruleScore);
+						if (probability == tagScore) {
 
-      // Handle unaries
+							List<Tree<String> > children = new ArrayList<Tree<String> >();
+							children.add(recursiveBuildTree(sentence, score, begin, split, B));
+							children.add(recursiveBuildTree(sentence, score, split, end, C));
+							curTree.setChildren(children);
 
-      for (String child: score.get(begin).get(end).keySet()) {
-        for (UnaryRule rule: grammar.getUnaryRulesByChild(child)) {
-          String parent = rule.getParent();
-          if (parent.equals(tag)) {
-            double probability = score.get(begin).get(end).getCount(child) - Math.log(rule.getScore());
+							return curTree;
+						}
 
-            if (probability == score.get(begin).get(end).getCount(parent)) {
-              List<Tree<String> > children = new ArrayList<Tree<String> >();
-              children.add(recursiveBuildTree(sentence, score, begin, end, child));
-              curTree.setChildren(children);
+					}
+				}
+			}
 
-              return curTree;
-            }
-          }
-        }
-      }
-      List<Tree<String> > children = new ArrayList<Tree<String> > ();
+			// Handle unaries
 
-      children.add(new Tree<String>(sentence.get(begin)));
-      curTree.setChildren(children);
-      return curTree;
-    }
-  }
+			for (String child: score.get(begin).get(end).keySet()) {
+				for (UnaryRule rule: grammar.getUnaryRulesByChild(child)) {
+					String parent = rule.getParent();
+					if (parent.equals(tag)) {
+						double probability = score.get(begin).get(end).getCount(child) - Math.log(rule.getScore());
+
+						if (probability == score.get(begin).get(end).getCount(parent)) {
+							List<Tree<String> > children = new ArrayList<Tree<String> >();
+							children.add(recursiveBuildTree(sentence, score, begin, end, child));
+							curTree.setChildren(children);
+
+							return curTree;
+						}
+					}
+				}
+			}
+			List<Tree<String> > children = new ArrayList<Tree<String> > ();
+
+			children.add(new Tree<String>(sentence.get(begin)));
+			curTree.setChildren(children);
+			return curTree;
+		}
+	}
 
 	// BaselineParser =============================================================
 
@@ -356,6 +358,35 @@ public class PCFGParserTester {
 	 */
 	public static class TreeAnnotations {
 
+		public static Tree<String> markovUnannotateTree(Tree<String> annotatedTree) {
+
+			// Currently, the only annotation done is a lossless binarization
+
+			// TODO : mark nodes with the label of their parent nodes, giving a second
+			// order vertical markov process
+			recMarkovUnannotateTree(annotatedTree);
+			return annotatedTree;
+		}
+		
+		public static void recMarkovUnannotateTree(Tree<String> tree){
+			String label = tree.getLabel();
+			int cutIndex = label.indexOf('^');
+			if(cutIndex > 0) tree.setLabel(label.substring(0, cutIndex));
+			for(Tree<String> child: tree.getChildren()) {
+				recMarkovUnannotateTree(child);
+			}
+		}
+		
+		public static Tree<String> markovAnnotateTree(Tree<String> unAnnotatedTree) {
+
+			// Currently, the only annotation done is a lossless binarization
+
+			// TODO : mark nodes with the label of their parent nodes, giving a second
+			// order vertical markov process
+			return markovizeTree(unAnnotatedTree);
+		}
+
+		
 		public static Tree<String> annotateTree(Tree<String> unAnnotatedTree) {
 
 			// Currently, the only annotation done is a lossless binarization
@@ -370,6 +401,23 @@ public class PCFGParserTester {
 
 		}
 
+		private static Tree<String> markovizeTreeHelper(Tree<String> parent, Tree<String> tree) {
+			List<Tree<String>> children = new ArrayList<Tree<String>>();
+			for(Tree<String> child: tree.getChildren()) {
+				children.add(markovizeTreeHelper(tree, child));
+			}
+			if(parent != null && !tree.isLeaf() && !tree.getChildren().get(0).isLeaf() ) {
+				String curLabel = tree.getLabel();
+				String parentLabel = parent.getLabel();
+				tree.setLabel(curLabel + "^" + parentLabel);
+			}
+			return tree;
+		}
+		
+		private static Tree<String> markovizeTree(Tree<String> tree) {
+			return markovizeTreeHelper(null, tree);
+		}
+	
 		private static Tree<String> binarizeTree(Tree<String> tree) {
 			String label = tree.getLabel();
 			if (tree.isLeaf())
@@ -502,7 +550,7 @@ public class PCFGParserTester {
 		Map<String, List<UnaryRule>> unaryRulesByChild = 
 				new HashMap<String, List<UnaryRule>>();
 
-    Set<String> allNonTerminals = new HashSet<String>();
+		Set<String> allNonTerminals = new HashSet<String>();
 
 		/* Rules in grammar are indexed by child for easy access when
 		 * doing bottom up parsing. */
@@ -518,25 +566,25 @@ public class PCFGParserTester {
 			return CollectionUtils.getValueList(unaryRulesByChild, child);
 		}
 
-    private void computeAllNonTerminals() {
+		private void computeAllNonTerminals() {
 			for (String leftChild : binaryRulesByLeftChild.keySet()) {
 
-        for (BinaryRule binaryRule : getBinaryRulesByLeftChild(leftChild)) {
-          allNonTerminals.add(binaryRule.getParent());
-        }
+				for (BinaryRule binaryRule : getBinaryRulesByLeftChild(leftChild)) {
+					allNonTerminals.add(binaryRule.getParent());
+				}
 
-      }
+			}
 
-      for (String child : unaryRulesByChild.keySet()) {
+			for (String child : unaryRulesByChild.keySet()) {
 				for (UnaryRule unaryRule : getUnaryRulesByChild(child)) {
 					allNonTerminals.add(unaryRule.getParent());
 				}
-      }
-    }
+			}
+		}
 
-    public Set<String> getAllNonTerminals() {
-      return allNonTerminals;
-    }
+		public Set<String> getAllNonTerminals() {
+			return allNonTerminals;
+		}
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			List<String> ruleStrings = new ArrayList<String>();
@@ -593,9 +641,9 @@ public class PCFGParserTester {
 				binaryRule.setScore(binaryProbability);
 				addBinary(binaryRule);
 			}
-      computeAllNonTerminals();
+			computeAllNonTerminals();
 
-    }
+		}
 
 		private void tallyTree(Tree<String> tree, Counter<String> symbolCounter,
 				Counter<UnaryRule> unaryRuleCounter, 
