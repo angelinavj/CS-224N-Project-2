@@ -118,14 +118,21 @@ public class PCFGParserTester {
 					int end = begin + span;
 					Counter<String> squareScore = score.get(begin).get(end);
 					for (int split = begin + 1; split <= end - 1; split++) {
-						for (String B: score.get(begin).get(split).keySet()) {
-							for (String C: score.get(split).get(end).keySet()) {
-								for (BinaryRule rule: grammar.getBinaryRulesByChildren(B, C)) {
-									String A = rule.getParent();
+            Counter<String> leftScore = score.get(begin).get(split);
+            Counter<String> rightScore = score.get(split).get(end);
 
-									double probability = score.get(begin).get(split).getCount(B) +
-											score.get(split).get(end).getCount(C) +
-											(-Math.log(rule.getScore()));
+						for (String B: leftScore.keySet()) {
+              double scoreB = leftScore.getCount(B);
+
+              for (BinaryRule rule: grammar.getBinaryRulesByLeftChild(B)) {
+                String C = rule.getRightChild();
+							  String A = rule.getParent();
+
+                if (rightScore.keySet().contains(C)) {
+                  double scoreC = rightScore.getCount(C);
+
+									double probability = scoreB + scoreC + 
+											        (-Math.log(rule.getScore()));
 									double oldScore = squareScore.getCount(A);
 									if (probability < oldScore  || oldScore == 0.0) {
 										squareScore.setCount(A, probability);
@@ -547,6 +554,7 @@ public class PCFGParserTester {
 
 		Set<String> allNonTerminals = new HashSet<String>();
 
+
 		/* Rules in grammar are indexed by child for easy access when
 		 * doing bottom up parsing. */
 		public List<BinaryRule> getBinaryRulesByLeftChild(String leftChild) {
@@ -891,22 +899,24 @@ public class PCFGParserTester {
 		}
 		else if (dataSet.equals("treebank")) {
 			System.out.print("Loading training trees...");
-			trainTrees = readTrees(basePath, 200, 2100);
+			trainTrees = readTrees(basePath, 200, 2199);
 			System.out.println("done.");
 			System.out.print("Loading validation trees...");
 			validationTrees = readTrees(basePath, 2200, 2299);
 			System.out.println("done.");
 			System.out.print("Loading test trees...");
-			testTrees = readTrees(basePath, 2300, 2300);
+			testTrees = readTrees(basePath, 2300, 2319);
 			System.out.println("done.");
 		}
 		else {
 			throw new RuntimeException("Bad data set mode: "+ dataSet+", use miniTest, or treebank."); 
 		}
 		parser.train(trainTrees);
+    testParser(parser, testTrees);
+    /*
 		List<Tree<String>> test1 = new ArrayList<Tree<String>>();
 		test1.add((trainTrees).get(1));
 		System.out.println("test 1 is " + test1.toString());
-		testParser(parser, test1);
+		testParser(parser, test1);*/
 	}
 }
