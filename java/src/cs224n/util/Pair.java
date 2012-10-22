@@ -28,12 +28,16 @@ public class Pair<F,S> {
 
     return true;
   }
+  
+  private int hashCode;
 
+  private void setHashcode() {
+	  hashCode = (first != null ? first.hashCode() : 0);
+	  hashCode = 29 * hashCode + (second != null ? second.hashCode() : 0);
+  }
+  
   public int hashCode() {
-    int result;
-    result = (first != null ? first.hashCode() : 0);
-    result = 29 * result + (second != null ? second.hashCode() : 0);
-    return result;
+    return hashCode;
   }
 
   public String toString() {
@@ -43,5 +47,6 @@ public class Pair<F,S> {
   public Pair(F first, S second) {
     this.first = first;
     this.second = second;
+    setHashcode();
   }
 }

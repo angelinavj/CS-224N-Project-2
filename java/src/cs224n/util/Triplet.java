@@ -39,7 +39,7 @@ public class Triplet<F,S,T> {
 		int result;
 		result = (first != null ? first.hashCode() : 0);
 		result = 29 * result + (second != null ? second.hashCode() : 0);
-		result = 37 * result + (second != null ? second.hashCode() : 0);
+		result = 37 * result + (third != null ? third.hashCode() : 0);
 		return result;
 	}
 	

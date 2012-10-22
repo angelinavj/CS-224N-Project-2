@@ -3,6 +3,7 @@ package cs224n.io;
 import cs224n.ling.Tree;
 import cs224n.ling.Trees;
 import cs224n.util.ConcatenationIterator;
+import cs224n.io.NumberRangeFileFilter;
 
 import java.util.*;
 import java.io.*;

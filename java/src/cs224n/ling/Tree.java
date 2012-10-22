@@ -1,8 +1,7 @@
 package cs224n.ling;
 
+import cs224n.ling.Constituent;
 import cs224n.util.Counter;
-import cs224n.util.CollectionUtils;
-
 import java.util.*;
 
 /**
