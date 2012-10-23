@@ -66,7 +66,6 @@ public class PCFGParserTester {
 		}
 
 		public Tree<String> getBestParse(List<String> sentence) {
-			System.out.println(sentence);
 			ArrayList<ArrayList<Counter<String> > > score = new ArrayList<ArrayList<Counter<String> > >();
 
 			long origStart = System.currentTimeMillis();
@@ -175,14 +174,12 @@ public class PCFGParserTester {
 
 		private Tree<String> buildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score) {
 			Tree<String> annotated = recursiveBuildTree(sentence, score, 0, sentence.size(), "ROOT", null);
-			System.out.println(annotated);
 			Tree<String> unanno = TreeAnnotations.unAnnotateTree(annotated);
 			return unanno;
 		}
 
 		private Tree<String> recursiveBuildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score,
 				int begin, int end, String tag, Set<String> unariesSeen) {
-			System.out.println(begin + " " + end + " " + tag);
 			Tree<String> curTree = new Tree<String>(tag);
 
 			double tagScore = score.get(begin).get(end).getCount(tag);
