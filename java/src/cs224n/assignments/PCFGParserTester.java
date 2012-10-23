@@ -71,7 +71,6 @@ public class PCFGParserTester {
 
 			long origStart = System.currentTimeMillis();
 			long start = origStart;
-			// TODO(veni): Left-align the 2D list to save space.
 			for (int i = 0; i < sentence.size(); i++) {
 				score.add(i, new ArrayList<Counter<String> >());
 				for (int j = 0; j <= sentence.size(); j++) {
@@ -190,14 +189,10 @@ public class PCFGParserTester {
 			Counter<String> squareScore = score.get(begin).get(end);
 			for (int split = begin + 1; split <= end - 1; split++) {
 				for (String B : score.get(begin).get(split).keySet()) {
-					for (String C: score.get(split).get(end).keySet()) {
-						double ruleScore = 0.0;
-						for (BinaryRule rule: grammar.getBinaryRulesByChildren(B, C)) {
-							if (rule.getParent().equals(tag)) {
-								ruleScore = rule.getScore();
-								break;
-							}
-						}
+					for (BinaryRule rule: grammar.getBinaryRulesByLeftChild(B)) {
+						String C = rule.getRightChild();
+						if (!rule.getParent().equals(tag) || !score.get(split).get(end).keySet().contains(C)) continue;
+						double ruleScore = rule.getScore();
 						if (ruleScore == 0.0) continue;
 
 						double probability = score.get(begin).get(split).getCount(B) +
@@ -550,8 +545,6 @@ public class PCFGParserTester {
 				new HashMap<String, List<BinaryRule>>();
 		Map<String, List<BinaryRule>> binaryRulesByRightChild = 
 				new HashMap<String, List<BinaryRule>>();
-		Map<Pair<String, String>, List<BinaryRule>> binaryRulesByChildren = 
-				new HashMap<Pair<String, String>, List<BinaryRule>>();
 		Map<String, List<UnaryRule>> unaryRulesByChild = 
 				new HashMap<String, List<UnaryRule>>();
 
@@ -588,11 +581,6 @@ public class PCFGParserTester {
 			}
 		}
 
-		public List<BinaryRule> getBinaryRulesByChildren(String leftChild, String rightChild) {
-			return CollectionUtils.getValueList(binaryRulesByChildren, new Pair<String, String>(leftChild, rightChild));
-		}
-
-
 		public Set<String> getAllNonTerminals() {
 			return allNonTerminals;
 		}
@@ -621,8 +609,6 @@ public class PCFGParserTester {
 					binaryRule.getLeftChild(), binaryRule);
 			CollectionUtils.addToValueList(binaryRulesByRightChild, 
 					binaryRule.getRightChild(), binaryRule);
-			CollectionUtils.addToValueList(binaryRulesByChildren, 
-					new Pair<String, String>(binaryRule.getLeftChild(), binaryRule.getRightChild()), binaryRule);
 		}
 
 		private void addUnary(UnaryRule unaryRule) {
@@ -914,12 +900,12 @@ public class PCFGParserTester {
 		else {
 			throw new RuntimeException("Bad data set mode: "+ dataSet+", use miniTest, or treebank."); 
 		}
-		//testParser(parser, testTrees);
-		
-		/*List<Tree<String>> test1 = new ArrayList<Tree<String>>();
-		test1.add(testTrees.get(4));
-		System.out.println("test 1 is " + test1.toString());*/
 		parser.train(trainTrees);
 		testParser(parser, testTrees);
+
+		/*List<Tree<String>> test1 = new ArrayList<Tree<String>>();
+		test1.add(testTrees.get(0));
+		System.out.println("test 1 is " + test1.toString());
+		testParser(parser, test1);*/
 	}
 }
