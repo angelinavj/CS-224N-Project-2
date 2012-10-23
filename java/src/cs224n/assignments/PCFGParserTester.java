@@ -177,7 +177,8 @@ public class PCFGParserTester {
 		private Tree<String> buildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score) {
 			Tree<String> annotated = recursiveBuildTree(sentence, score, 0, sentence.size(), "ROOT", null);
 			System.out.println(annotated);
-			return TreeAnnotations.unAnnotateTree(annotated);
+			Tree<String> unanno = TreeAnnotations.unAnnotateTree(annotated);
+			return unanno;
 		}
 
 		private Tree<String> recursiveBuildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score,
@@ -397,7 +398,9 @@ public class PCFGParserTester {
 
 			// TODO: change the annotation from a lossless binarization to a
 			// finite-order markov process (try at least 1st and 2nd order)
-			return binarizeTree(unAnnotatedTree);
+			Tree<String> annotated = markovAnnotateTree(unAnnotatedTree);
+			annotated = binarizeTree(annotated);
+			return annotated;
 
 		}
 
@@ -448,7 +451,7 @@ public class PCFGParserTester {
 				children.add(rightTree);
 			}
 			return new Tree<String>(intermediateLabel, children);
-		} 
+		}
 
 		public static Tree<String> unAnnotateTree(Tree<String> annotatedTree) {
 
@@ -466,7 +469,7 @@ public class PCFGParserTester {
 					});
 			Tree<String> unAnnotatedTree = 
 					(new Trees.FunctionNodeStripper()).transformTree(debinarizedTree);
-			return unAnnotatedTree;
+			return markovUnannotateTree(unAnnotatedTree);
 		}
 	}
 
@@ -911,12 +914,12 @@ public class PCFGParserTester {
 		else {
 			throw new RuntimeException("Bad data set mode: "+ dataSet+", use miniTest, or treebank."); 
 		}
+		//testParser(parser, testTrees);
+		
+		/*List<Tree<String>> test1 = new ArrayList<Tree<String>>();
+		test1.add(testTrees.get(4));
+		System.out.println("test 1 is " + test1.toString());*/
 		parser.train(trainTrees);
 		testParser(parser, testTrees);
-		/*
-		List<Tree<String>> test1 = new ArrayList<Tree<String>>();
-		test1.add((trainTrees).get(1));
-		System.out.println("test 1 is " + test1.toString());
-		testParser(parser, test1);*/
 	}
 }
