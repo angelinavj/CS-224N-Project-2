@@ -401,7 +401,7 @@ public class PCFGParserTester {
 			for(Tree<String> child: tree.getChildren()) {
 				children.add(markovizeTreeHelper(tree, child));
 			}
-			if(parent != null && !tree.isLeaf() && !tree.getChildren().get(0).isLeaf() ) {
+			if(parent != null && !tree.isLeaf()) {
 				String curLabel = tree.getLabel();
 				String parentLabel = parent.getLabel();
 				tree.setLabel(curLabel + "^" + parentLabel);
