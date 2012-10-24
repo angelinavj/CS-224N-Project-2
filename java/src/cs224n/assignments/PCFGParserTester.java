@@ -173,13 +173,13 @@ public class PCFGParserTester {
 
 
 		private Tree<String> buildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score) {
-			Tree<String> annotated = recursiveBuildTree(sentence, score, 0, sentence.size(), "ROOT", null);
+			Tree<String> annotated = recursiveBuildTree(sentence, score, 0, sentence.size(), "ROOT");
 			Tree<String> unanno = TreeAnnotations.unAnnotateTree(annotated);
 			return unanno;
 		}
 
 		private Tree<String> recursiveBuildTree(List<String> sentence, ArrayList<ArrayList<Counter<String> > > score,
-				int begin, int end, String tag, Set<String> unariesSeen) {
+				int begin, int end, String tag) {
 			Tree<String> curTree = new Tree<String>(tag);
 
 			double tagScore = score.get(begin).get(end).getCount(tag);
@@ -198,8 +198,8 @@ public class PCFGParserTester {
 						if (probability == tagScore) {
 
 							List<Tree<String> > children = new ArrayList<Tree<String> >();
-							children.add(recursiveBuildTree(sentence, score, begin, split, B, null));
-							children.add(recursiveBuildTree(sentence, score, split, end, C, null));
+							children.add(recursiveBuildTree(sentence, score, begin, split, B));
+							children.add(recursiveBuildTree(sentence, score, split, end, C));
 							curTree.setChildren(children);
 
 							return curTree;
@@ -209,21 +209,14 @@ public class PCFGParserTester {
 				}
 			}
 
-			// Handle unaries
-			if(unariesSeen==null) {
-				unariesSeen = new HashSet<String>();
-				unariesSeen.add(tag);
-			}
 			for (String child: squareScore.keySet()) {
-				if(unariesSeen.contains(child)) continue;
 				for (UnaryRule rule: grammar.getUnaryRulesByChild(child)) {
 					String parent = rule.getParent();					
 					if (parent.equals(tag)) {
-						unariesSeen.add(child);
 						double probability = squareScore.getCount(child) + -Math.log(rule.getScore());
 						if (probability == squareScore.getCount(parent)) {
 							List<Tree<String> > children = new ArrayList<Tree<String> >();
-							children.add(recursiveBuildTree(sentence, score, begin, end, child, unariesSeen));
+							children.add(recursiveBuildTree(sentence, score, begin, end, child));
 							curTree.setChildren(children);
 
 							return curTree;
